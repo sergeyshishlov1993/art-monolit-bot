@@ -75,7 +75,7 @@ bot
   .catch((err) => console.error("Ошибка запуска бота:", err));
 
 // Запуск сервера Express.js
-const PORT = process.env.PORT || "https://art-monolit-bot.vercel.app/";
+const PORT = process.env.PORT || 3002;
 app.listen(PORT, () => {
   console.log(`Сервер Express.js запущен на порту ${PORT}`);
 });
