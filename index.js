@@ -1,67 +1,129 @@
 const express = require("express");
 const { Telegraf } = require("telegraf");
-const admin = require("firebase-admin");
+const { admin, doc, updateDoc } = require("./module/firebaseConfig");
+
+const telegramConfig = require("./module/telegramConfig");
 
 const app = express();
-
-// Инициализация приложения Firebase с использованием вашего ключа сервисного аккаунта
-admin.initializeApp({
-  credential: admin.credential.cert({
-    type: "service_account",
-    project_id: "art-monolit-8898c",
-    private_key_id: "daba4003b775ff5f3f5b9c101df5d620095dd060",
-    private_key:
-      "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCz+OHtKKZPrQiR\ncDeIAa4D6k6mlLM7jKjh58UMk4wzsAkJyWZazfv+sKMUAkDh9jTniVLz9beGcDI2\nreJQAr8HBXeSS9mLVkz2VqnqDwbJoKlAsqY+cPWRGENDvPbTQR9sGvK5w27tzPE4\noJ/WcJ5gOyqnes0BZQ5T2rvqO9MhPZoEcZShoO1M/fCfmtW8Ca8UU1qPv6jKNabo\n8OuY+vjCgdzoydj9pYJndVVJbvfXOOOZO8ZdulBwW5ldOuhdYLhRcghwAqnczEGz\nvLuKb9z6SFd/tc9RSTK9lOA9VNA3L2kEw0cNCFpNUCVcDbRtHn4gCigBSc0svxfi\nSnjnapHZAgMBAAECgf9MtyqXDVzXWcrtNAh30T98K8Sa/YfpOmxC36j/U2XQIpm3\nskIPMv7X8jORs+Q0bd7fU4oos/UnOWwuIrD1qjYDqDDwC6UP4BmuaALF4uHh0LpU\n+dIji8MhtlX16fbM1lWun04YIVaHx3SLzuxTXG4mVxI3kgERNyKEXBj+H8I/yGk6\nRvnzuMyLW7ftMZQLeb2QAdSrc5U2uuxB30RJhaIjkf4InMrQoqaWjIge6o7lbhLu\nvz71DDZwhuSg19KONUCqNC6FxYDY8JximpkPWx1C6KbEkrDu9UZL+wZx4NOMQvAV\nymWgE9Ze0wi+ooGDsia5Svsk8R2aMtKvGdobCYECgYEA+0BZbyK4KE8+GpfiKl51\nnQ5WTVSwAacd2KRtHhYSQiwdwZXb6B7ycW3VYQOOnhiS9vmUs8uAGxuCeLV1s2hS\npKmgjQ8Qv8p73gorFZVZglykHU13oA11IcEhPWJS/mk636dKgkxj3b9oQ8E+TyIH\nncQzkuOTB3J6abkntLJ/fVkCgYEAt1+oPGrMB4TbqfZVP8XYmyvSfSCYARFZwfsZ\nTLKd1GntVEMkTkp9MLUf0dvYTnR8Wp5QJb07RqmelB8m+MmVawvqeWGkJQcCxzA/\n36KAZE+VxRJW6cBmMv2c0HujDYGBnouPrvTmQp1chah9SWDm+4Z9P+4YsRjVt4bb\nt7L6qIECgYB84z+RPnDLmJgGH/kLlmhf6QB879uM9sSfKxwSGGZ6/fLMhvEIMFnS\niAXIczww2YYzvVttA3pp/wKbfZdD1lc+AhMMCrEIpF1twSApWlNjuSjaZ+dOZ2IR\npS4glP8r9qKNCVq/6bi6QKpTA3s1WnTuttfr67LpwL2YT7Cs4Qz+AQKBgQCZudKS\n28ExqHpyULUE4nqFE0bBaTqk4oPJsBR0jOTtduPkGOltzNqIo78KMnByzQqW+VMd\nYDc6NOZhLICCXpQpinLF0UpHVEpK7DMP6u4RqfpXnNlJ2uaSZrQ4vv1hTCl63WrV\n9C64t60hy69Efb0GLagAmT0P8k7wLVky9hNWgQKBgQCo6LsxR+e5leiU4FguYrZQ\nvAeRR6E8Aaydn3HdFZiO8napW8VpGX5OXroRfqDGg3B8GZ/pDgF+qjgtm85d5jEj\nMSWBLR2v7KyMytBYpkfsgKpwRFr60uSYKjEq+pOXUiN19Vd3nK/s0kV0QYvuURew\naQeTDsDzD0Nu+Jk+ebU/Jg==\n-----END PRIVATE KEY-----\n",
-    client_email:
-      "firebase-adminsdk-w0154@art-monolit-8898c.iam.gserviceaccount.com",
-    client_id: "105779064019433941272",
-    auth_uri: "https://accounts.google.com/o/oauth2/auth",
-    token_uri: "https://oauth2.googleapis.com/token",
-    auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
-    client_x509_cert_url:
-      "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-w0154%40art-monolit-8898c.iam.gserviceaccount.com",
-    universe_domain: "googleapis.com",
-  }),
-  databaseURL: "https://art-monolit-8898c.firebaseio.com", // Замените на URL вашей базы данных Firebase
-});
-
-const TELEGRAM_BOT_TOKEN = "7151615540:AAGh1Rxwj6fDSkygeCwbj4mJahiQ2ejjEj8";
-const bot = new Telegraf(TELEGRAM_BOT_TOKEN);
+const bot = new Telegraf(telegramConfig.TELEGRAM_BOT_TOKEN);
 
 const sendNotification = (message) => {
-  bot.telegram.sendMessage("215524805", message); // Замените на ваш Telegram ID
+  bot.telegram.sendMessage(telegramConfig.TELEGRAM_ID, message);
 };
 
-// Получение реального времени обновлений из Firebase
-const db = admin.firestore();
-const feedbackRef = db.collection("feedback");
+// // Получение реального времени обновлений из Firebase
+function databaseSubscription() {
+  const db = admin.firestore();
+  const feedbackRef = db.collection("feedback");
 
-feedbackRef
-  .orderBy("timestamp", "desc")
-  .limit(1)
-  .onSnapshot((snapshot) => {
-    snapshot.docChanges().forEach((change) => {
-      if (change.type === "added" || change.type === "modified") {
-        const newData = change.doc.data();
-        const statusEmoji = newData.status === "в обробці" ? "🔴" : "🟢";
-        const message = `
-        Добавлена новая запись 😊:
+  feedbackRef
+    .orderBy("timestamp", "desc")
+    .limit(1)
+    .onSnapshot((snapshot) => {
+      snapshot.docChanges().forEach((change) => {
+        if (change.type === "added" || change.type === "modified") {
+          const newData = change.doc.data();
+          const statusEmoji = newData.status === "в обробці" ? "🔴" : "🟢";
+          const message = `
+            Добавлена новая запись 😊:
+    
+            📱 Номер телефона :
+            
+            ${newData.phone},
+    
+            🧑  Имя:    ${newData.name},
+    
+             📅 Дата:  ${newData.date},
+    
+             ${statusEmoji} Статус: ${newData.status}
+    
+            -------------------------------------------
+             `;
 
-        📱 Номер телефона : ${newData.phone},
-
-        🧑  Имя:    ${newData.name},
-
-         📅 Дата:  ${newData.date},
-
-         ${statusEmoji} Статус: ${newData.status}
-
-        -------------------------------------------
-         `;
-
-        sendNotification(message);
-      }
+          sendNotification(message);
+        }
+      });
     });
-  });
+}
+
+databaseSubscription();
+
+bot.start(async (ctx) => {
+  await databaseSubscription();
+  ctx.reply(
+    `Привет! Добро пожаловать ${ctx.chat.first_name} ${ctx.chat.last_name}!`
+  );
+});
+
+bot.action(async (ctx) => {
+  const db = admin.firestore();
+
+  const buttonId = ctx;
+
+  const updateData = {
+    status: "виконанно",
+  };
+
+  try {
+    if (buttonId && typeof buttonId === "string" && buttonId.trim() !== "") {
+      const docRef = db.collection("feedback").doc(buttonId);
+      await docRef.update(updateData);
+      console.log("Статус успешно обновлен");
+    } else {
+      console.error("Недопустимый идентификатор документа");
+    }
+  } catch (error) {
+    console.error("Ошибка при обновлении документа:", error);
+  }
+});
+
+bot.command("get", (ctx) => {
+  const db = admin.firestore();
+  const feedbackRef = db.collection("feedback");
+
+  function getFeedbackInProcess() {
+    return new Promise(async (resolve, reject) => {
+      await feedbackRef
+        .where("status", "==", "в обробці")
+        .get()
+        .then((querySnapshot) => {
+          querySnapshot.forEach((doc) => {
+            console.log(doc.id);
+            const statusEmoji = doc.data().status === "в обробці" ? "🔴" : "🟢";
+
+            const message = `
+
+                Необработаные заявки  😊:
+
+                📱 Номер телефона :
+                              
+                ${doc.data().phone},
+
+                🧑  Имя:    ${doc.data().name},
+
+                📅 Дата:  ${doc.data().date},
+
+                ${statusEmoji} Статус: ${doc.data().status}
+
+                 -------------------------------------------
+                          `;
+
+            ctx.reply(message, {
+              reply_markup: {
+                inline_keyboard: [
+                  [{ text: "ВЫПОЛНИТЬ", callback_data: doc.id }],
+                ],
+              },
+            });
+          });
+        })
+        .catch((error) => {
+          reject(error);
+        });
+    });
+  }
+  getFeedbackInProcess();
+});
 
 // Обработчик ошибок
 bot.catch((err, ctx) => {
