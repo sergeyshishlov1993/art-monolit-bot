@@ -174,7 +174,7 @@ bot.catch((err, ctx) => {
 //   .then(() => console.log("Бот запущен"))
 //   .catch((err) => console.error("Ошибка запуска бота:", err));
 
-bot.telegram.setWebhook(`https://your-vercel-app-url/api/bot`);
+bot.telegram.setWebhook(`https://your-vercel-app-url`);
 
 // Запуск сервера Express.js
 const PORT = process.env.PORT || 3000;
