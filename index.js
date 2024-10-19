@@ -7,7 +7,10 @@ const telegramConfig = require("./module/telegramConfig");
 const app = express();
 const bot = new Telegraf(telegramConfig.TELEGRAM_BOT_TOKEN);
 
-app.use(bot.webhookCallback("/api/bot"));
+app.use(express.json());
+
+// Запуск бота через вебхук
+app.post("/", bot.webhookCallback("/"));
 
 // Встановлюємо URL вебхука
 
@@ -174,7 +177,7 @@ bot.catch((err, ctx) => {
 //   .then(() => console.log("Бот запущен"))
 //   .catch((err) => console.error("Ошибка запуска бота:", err));
 
-bot.telegram.setWebhook(`https://your-vercel-app-url`);
+bot.telegram.setWebhook("https://art-monolit-bot.vercel.app/");
 
 // Запуск сервера Express.js
 const PORT = process.env.PORT || 3000;
