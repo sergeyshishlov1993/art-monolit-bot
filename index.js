@@ -7,15 +7,10 @@ const telegramConfig = require("./module/telegramConfig");
 const app = express();
 const bot = new Telegraf(telegramConfig.TELEGRAM_BOT_TOKEN);
 
-app.use(express.json());
-
-// Запуск бота через вебхук
-app.post("/", (req, res) => {
-  console.log("Отримано запит вебхука:", req.body);
-  bot.webhookCallback("/")(req, res);
-});
+app.use(bot.webhookCallback("/api/bot"));
 
 // Встановлюємо URL вебхука
+bot.telegram.setWebhook(`https://your-vercel-app-url/api/bot`);
 
 function convertTimestampToReadable(timestamp) {
   const seconds = timestamp._seconds;
@@ -175,12 +170,10 @@ bot.catch((err, ctx) => {
 });
 
 // Запуск телеграм-бота
-// bot
-//   .launch()
-//   .then(() => console.log("Бот запущен"))
-//   .catch((err) => console.error("Ошибка запуска бота:", err));
-
-bot.telegram.setWebhook("https://art-monolit-bot.vercel.app/");
+bot
+  .launch()
+  .then(() => console.log("Бот запущен"))
+  .catch((err) => console.error("Ошибка запуска бота:", err));
 
 // Запуск сервера Express.js
 const PORT = process.env.PORT || 3000;
