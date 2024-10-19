@@ -10,7 +10,10 @@ const bot = new Telegraf(telegramConfig.TELEGRAM_BOT_TOKEN);
 app.use(express.json());
 
 // Запуск бота через вебхук
-app.post("/", bot.webhookCallback("/"));
+app.post("/", (req, res) => {
+  console.log("Отримано запит вебхука:", req.body);
+  bot.webhookCallback("/")(req, res);
+});
 
 // Встановлюємо URL вебхука
 
