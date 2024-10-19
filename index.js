@@ -7,10 +7,12 @@ const telegramConfig = require("./module/telegramConfig");
 const app = express();
 const bot = new Telegraf(telegramConfig.TELEGRAM_BOT_TOKEN);
 
+app.use(express.json());
 app.use(bot.webhookCallback("/api/bot"));
 
-// Встановлюємо URL вебхука
-bot.telegram.setWebhook(`https://your-vercel-app-url/api/bot`);
+// Встановлюємо правильний URL вебхука
+const webhookURL = `https://your-koyeb-app-name.koyeb.app/api/bot`; // Замініть на ваш фактичний URL
+bot.telegram.setWebhook(webhookURL);
 
 function convertTimestampToReadable(timestamp) {
   const seconds = timestamp._seconds;
@@ -32,7 +34,7 @@ const sendNotification = (message) => {
   bot.telegram.sendMessage(telegramConfig.TELEGRAM_ID, message);
 };
 
-// Получение реального времени обновлений из Firebase
+// Отримання даних у реальному часі з Firebase
 function databaseSubscription() {
   const db = admin.firestore();
   const feedbackRef = db.collection("feedbacks");
@@ -55,13 +57,12 @@ function databaseSubscription() {
             
             ${newData.phone},
     
-            🧑  Имя:    ${newData.firstName},
+            🧑  Имя: ${newData.firstName},
     
              📅 Дата: ${readableTimestamp},
     
             -------------------------------------------
-             `;
-
+          `;
           sendNotification(message);
         }
       });
@@ -70,14 +71,6 @@ function databaseSubscription() {
 
 databaseSubscription();
 
-bot.start(async (ctx) => {
-  await databaseSubscription();
-  ctx.reply(
-    `Привет! Добро пожаловать ${ctx.chat.first_name} ${ctx.chat.last_name}!`
-  );
-});
-
-// Команда для отображения выбора статусов
 bot.command("status", (ctx) => {
   ctx.reply("Выберите статус для получения заявок:", {
     reply_markup: {
@@ -90,15 +83,14 @@ bot.command("status", (ctx) => {
   });
 });
 
-// Обработка выбора статуса
 bot.action(async (ctx) => {
-  const status = ctx.callbackQuery.data; // Получаем выбранный статус
+  const status = ctx.callbackQuery.data;
 
   const db = admin.firestore();
   const feedbackRef = db.collection("feedbacks");
 
   feedbackRef
-    .where("status", "==", status) // Получаем заявки по выбранному статусу
+    .where("status", "==", status)
     .get()
     .then((querySnapshot) => {
       if (querySnapshot.empty) {
@@ -133,47 +125,10 @@ bot.action(async (ctx) => {
     });
 });
 
-// Команда для получения необработанных заявок
-bot.command("get", (ctx) => {
-  const db = admin.firestore();
-  const feedbackRef = db.collection("feedbacks");
-
-  feedbackRef
-    .where("status", "==", "Новый контакт")
-    .get()
-    .then((querySnapshot) => {
-      querySnapshot.forEach((doc) => {
-        const message = `
-          Необработанные заявки  😊:
-          📱 Номер телефона: ${doc.data().phone},
-          🧑 Имя: ${doc.data().firstName},
-          📅 Дата: ${doc.data().date},
-          -------------------------------------------
-        `;
-
-        ctx.reply(message, {
-          reply_markup: {
-            inline_keyboard: [[{ text: "ВЫПОЛНИТЬ", callback_data: doc.id }]],
-          },
-        });
-      });
-    })
-    .catch((error) => {
-      console.error("Ошибка при получении заявок:", error);
-      ctx.reply("Произошла ошибка при получении заявок.");
-    });
-});
-
-// Обработчик ошибок
+// Обробник помилок
 bot.catch((err, ctx) => {
-  console.error(`Ooops, encountered an error for ${ctx.updateType}`, err);
+  console.error(`Ooops, ошибка: ${err}`, ctx);
 });
-
-// Запуск телеграм-бота
-bot
-  .launch()
-  .then(() => console.log("Бот запущен"))
-  .catch((err) => console.error("Ошибка запуска бота:", err));
 
 // Запуск сервера Express.js
 const PORT = process.env.PORT || 3000;
