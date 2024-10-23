@@ -44,7 +44,7 @@ function databaseSubscription() {
     .limit(1)
     .onSnapshot((snapshot) => {
       snapshot.docChanges().forEach((change) => {
-        if (change.type === "added" || change.type === "modified") {
+        if (change.type === "added") {
           const newData = change.doc.data();
           const readableTimestamp = convertTimestampToReadable(
             newData.timestamp
@@ -70,60 +70,6 @@ function databaseSubscription() {
 }
 
 databaseSubscription();
-
-bot.command("status", (ctx) => {
-  ctx.reply("Выберите статус для получения заявок:", {
-    reply_markup: {
-      inline_keyboard: [
-        [{ text: "Новый контакт", callback_data: "Новый контакт" }],
-        [{ text: "В процессе", callback_data: "В процессе" }],
-        [{ text: "Выполнено", callback_data: "Выполнено" }],
-      ],
-    },
-  });
-});
-
-bot.action(async (ctx) => {
-  const status = ctx.callbackQuery.data;
-
-  const db = admin.firestore();
-  const feedbackRef = db.collection("feedbacks");
-
-  feedbackRef
-    .where("status", "==", status)
-    .get()
-    .then((querySnapshot) => {
-      if (querySnapshot.empty) {
-        ctx.reply(`Заявок со статусом "${status}" не найдено.`);
-        return;
-      }
-
-      querySnapshot.forEach((doc) => {
-        const feedback = doc.data();
-        const readableTimestamp = convertTimestampToReadable(
-          feedback.timestamp
-        );
-
-        const message = `
-          Заявка со статусом ${status}:
-          📱 Номер телефона: ${feedback.phone},
-          🧑 Имя: ${feedback.firstName},
-          📅 Дата: ${readableTimestamp},
-          -------------------------------------------
-        `;
-
-        ctx.reply(message, {
-          reply_markup: {
-            inline_keyboard: [[{ text: "ВЫПОЛНИТЬ", callback_data: doc.id }]],
-          },
-        });
-      });
-    })
-    .catch((error) => {
-      console.error("Ошибка при получении заявок:", error);
-      ctx.reply("Произошла ошибка при получении заявок.");
-    });
-});
 
 // Обробник помилок
 bot.catch((err, ctx) => {
